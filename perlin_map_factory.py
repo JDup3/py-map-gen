@@ -83,24 +83,28 @@ class WrappingPerlinMapFactory(object):
         # However, computing a set of points to iterate over will likely not change
         # the runtime past O(n**d) for d dimensions
         all_points = product(*(range(self.raw_tile[i]+1) for i in range(self.dimension)))
-        for outer_coord in all_points:
-            if outer_coord[0] == sum(outer_coord):
+        for coord in all_points:
+            if coord[0] == sum(coord):
                 # along the x axis, make the gradients the same
                 # only the x axis will attribute to the sum when we are along the x axis
-                self.gradient[outer_coord] = self.gradient[origin]
-            elif outer_coord[0] == 0:
-                outer_coord_copy = (self.raw_tile[0],) + outer_coord[1:]
+                self.gradient[coord] = self.gradient[origin]
+            elif coord[0] == 0:
+                coord_copy = (self.raw_tile[0],) + coord[1:]
                 # at any point with x = 0, make this the same as the gradient at x = max_dim with
                 # the same coords for the other dimensions
-                self.gradient[outer_coord] = self._generate_gradient()
-                self.gradient[outer_coord_copy] = self.gradient[outer_coord]
+                self.gradient[coord] = self._generate_gradient()
+                self.gradient[coord_copy] = self.gradient[coord]
             else:
                 for i in range(1, self.dimension):
-                    if outer_coord[i] == self.raw_tile[i]:
+                    if coord[i] == self.raw_tile[i]:
                         # at the dimension's maximum, make the gradient the same as all others
                         # along the same plane
-                        self.gradient[outer_coord] = self.gradient[origin_max[i-1]]
+                        self.gradient[coord] = self.gradient[origin_max[i-1]]
                         break
+            # in order to keep the maps reproducible and consistent, avoid generating the gradient
+            # at the time of calculating the actual noise value
+            if coord not in self.gradient:
+                self.gradient[coord] = self._generate_gradient()
 
     def get_plain_noise(self, *point):
         if len(point) != self.dimension:
@@ -115,8 +119,6 @@ class WrappingPerlinMapFactory(object):
 
         dots = []
         for grid_point in product(*grid_coords):
-            if grid_point not in self.gradient:
-                self.gradient[grid_point] = self._generate_gradient()
             gradient = self.gradient[grid_point]
 
             dot = 0
