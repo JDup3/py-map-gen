@@ -1,3 +1,8 @@
+""" An expanded perlin noise factory object which tiles in
+a uniform way.
+This code is essentially a fork of
+https://gist.github.com/eevee/26f547457522755cb1fb8739d0ea89a1
+"""
 from itertools import product
 import math
 import random
@@ -18,6 +23,7 @@ class WrappingPerlinMapFactory(object):
         if seed is not None:
             random.seed(seed)
 
+        # A dimension of 1 will not do a whole lot using this method
         self.dimension = dimension
         self.octaves = octaves
         self.raw_tile = tile
